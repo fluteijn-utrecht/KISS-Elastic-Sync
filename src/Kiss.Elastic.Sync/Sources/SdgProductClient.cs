@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Kiss.Elastic.Sync.Sources
 {
@@ -52,5 +53,26 @@ namespace Kiss.Elastic.Sync.Sources
         }
 
         public void Dispose() => _objectenClient.Dispose();
+
+        public Task SaveAll(IAsyncEnumerable<JsonObject> docs) => _objectenClient.SaveAll(docs, _objecttypeUrl, 3);
+
+        private static async IAsyncEnumerable<JsonObject> FixDocs(IAsyncEnumerable<JsonObject> docs)
+        {
+            await foreach (var doc in docs)
+            {
+                if (doc["afdelingen"] is JsonArray afdelingen)
+                {
+                    foreach (var item in afdelingen)
+                    {
+                        if (item is JsonObject obj && obj["afdelingNaam"]?.ToString() is string afdeling)
+                        {
+                            obj["afdelingnaam"] = afdeling;
+                            obj.Remove("afdelingNaam");
+                        }
+                    }
+                }
+                yield return doc;
+            }
+        }
     }
 }

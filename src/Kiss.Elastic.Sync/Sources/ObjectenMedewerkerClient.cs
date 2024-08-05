@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Kiss.Elastic.Sync.Sources
 {
@@ -68,5 +69,7 @@ namespace Kiss.Elastic.Sync.Sources
         {
             _objectenClient.Dispose();
         }
+
+        public Task SaveAll(IAsyncEnumerable<JsonObject> docs) => _objectenClient.SaveAll(docs, _objecttypeUrl);
     }
 }

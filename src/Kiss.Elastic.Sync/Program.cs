@@ -33,9 +33,13 @@ var source = args.FirstOrDefault();
 
 
 using var sourceClient = SourceFactory.CreateClient(source);
-Console.WriteLine("Start syncing source " + sourceClient.Source);
+var getAll = new GetAllFromElastic();
+var docs = getAll.GetAllDocuments(sourceClient.Source);
+await sourceClient.SaveAll(docs);
 
-var records = sourceClient.Get(cancelSource.Token);
-var indexName = await elasticClient.IndexBulk(records, sourceClient.Source, sourceClient.CompletionFields, cancelSource.Token);
-await enterpriseClient.AddIndexEngineAsync(indexName, cancelSource.Token);
-Console.WriteLine("Finished indexing source " + sourceClient.Source);
+//Console.WriteLine("Start syncing source " + sourceClient.Source);
+
+//var records = sourceClient.Get(cancelSource.Token);
+//var indexName = await elasticClient.IndexBulk(records, sourceClient.Source, sourceClient.CompletionFields, cancelSource.Token);
+//await enterpriseClient.AddIndexEngineAsync(indexName, cancelSource.Token);
+//Console.WriteLine("Finished indexing source " + sourceClient.Source);

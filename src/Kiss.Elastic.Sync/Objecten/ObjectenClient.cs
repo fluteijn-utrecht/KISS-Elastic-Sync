@@ -1,9 +1,11 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Web;
 using Microsoft.IdentityModel.Tokens;
 
@@ -21,6 +23,9 @@ namespace Kiss.Elastic.Sync.Sources
             {
                 BaseAddress = objectenBaseUri
             };
+
+            var headers = _httpClient.DefaultRequestHeaders;
+            headers.Add("Content-Crs", "EPSG:4326");
 
             if (!string.IsNullOrWhiteSpace(objectenClientId) && !string.IsNullOrWhiteSpace(objectenClientSecret))
             {
@@ -41,6 +46,31 @@ namespace Kiss.Elastic.Sync.Sources
         {
             var url = $"/api/v2/objects?type={HttpUtility.UrlEncode(type)}";
             return GetObjectenInternal(url, token);
+        }
+
+        public async Task SaveAll(IAsyncEnumerable<JsonObject> docs, string type, int typeVersion = 1)
+        {
+            var url = "/api/v2/objects";
+            var startAt = DateTime.Now.ToString("yyyy-MM-dd");
+            await foreach (var doc in docs)
+            {               
+                var wrapper = new JsonObject
+                {
+                    ["type"] = type,
+                    ["record"] = new JsonObject
+                    {
+                        ["typeVersion"] = typeVersion,
+                        ["startAt"] = startAt,
+                        ["data"] = doc.DeepClone()
+                    }
+                };
+                using var response = await _httpClient.PostAsJsonAsync(url, wrapper);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                }
+                response.EnsureSuccessStatusCode();
+            }
         }
 
         private static string GetToken(string id, string secret)

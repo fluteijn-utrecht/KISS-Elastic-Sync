@@ -6,7 +6,7 @@
         {
             "vac" => GetVacClient(),
             "smoelenboek" => GetMedewerkerClient(),
-            _ => GetProductClient(),
+            _ => GetMedewerkerClient(),
         };
 
         private static SdgProductClient GetProductClient()
